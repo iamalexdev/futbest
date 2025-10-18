@@ -1,26 +1,37 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
-from handlers.start import start
-from handlers.wallet import wallet, wallet_action
-from handlers.bets import bets
-from database.db import init_db
-from config import TELEGRAM_BOT_TOKEN
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from database.db import init_db, get_user, create_user
+from handlers.wallet import wallet_menu
+from handlers.bets import bets_menu
 
-async def router(update, context):
+TOKEN = "TU_TOKEN_DE_TELEGRAM_BOT_AQUI"
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = get_user(update.effective_user.id)
+    if not user:
+        create_user(update.effective_user.id, update.effective_user.username)
+        await update.message.reply_text("👋 ¡Bienvenido! Tu cuenta ha sido creada.")
+    else:
+        await update.message.reply_text(f"¡Hola {user.username}! 👋")
+
+    keyboard = [
+        [InlineKeyboardButton("💰 Mi Billetera", callback_data="wallet")],
+        [InlineKeyboardButton("⚽ Apuestas", callback_data="bets")]
+    ]
+    await update.message.reply_text("Selecciona una opción:", 
+                                    reply_markup=InlineKeyboardMarkup(keyboard))
+
+async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    data = query.data
-    if data == "wallet":
-        await wallet(update, context)
-    elif data in ["deposit", "withdraw"]:
-        await wallet_action(update, context)
-    elif data == "bets":
-        await bets(update, context)
-    elif data == "back_main":
-        await start(update, context)
+    await query.answer()
+    if query.data == "wallet":
+        await wallet_menu(update, context)
+    elif query.data == "bets":
+        await bets_menu(update, context)
 
 if __name__ == "__main__":
     init_db()
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(router))
-    print("🤖 FutBetMaster está en línea...")
+    app.add_handler(CallbackQueryHandler(menu_handler))
     app.run_polling()

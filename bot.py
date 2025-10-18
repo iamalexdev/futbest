@@ -4,7 +4,7 @@ from database.db import init_db, get_user, create_user
 from handlers.wallet import wallet_menu
 from handlers.bets import bets_menu
 
-TOKEN = "TU_TOKEN_DE_TELEGRAM_BOT_AQUI"
+TOKEN = "7630853977:AAGrnl9XdzC-8eONDIp-8NM-uqimlYboFcc"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = get_user(update.effective_user.id)
@@ -35,3 +35,4 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(menu_handler))
     app.run_polling()
+
